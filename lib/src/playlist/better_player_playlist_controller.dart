@@ -88,6 +88,23 @@ class BetterPlayerPlaylistController {
     _changingToNextVideo = false;
   }
 
+  void setupVideoIndex(int index){
+    if (_changingToNextVideo) {
+      return;
+    }
+    final int nextDataSourceId = index;
+    if (nextDataSourceId == -1) {
+      return;
+    }
+    // if (_betterPlayerController!.isFullScreen) {
+    //   _betterPlayerController!.exitFullScreen();
+    // }
+    _changingToNextVideo = true;
+    setupDataSource(nextDataSourceId);
+
+    _changingToNextVideo = false;
+  }
+
   ///Handle BetterPlayerEvent from BetterPlayerController. Used to control
   ///startup of next video timer.
   void _handleEvent(BetterPlayerEvent betterPlayerEvent) {
