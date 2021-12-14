@@ -79,16 +79,16 @@ class BetterPlayerPlaylistController {
     if (nextDataSourceId == -1) {
       return;
     }
-    if (_betterPlayerController!.isFullScreen) {
-      _betterPlayerController!.exitFullScreen();
-    }
+    // if (_betterPlayerController!.isFullScreen) {
+    //   _betterPlayerController!.exitFullScreen();
+    // }
     _changingToNextVideo = true;
     setupDataSource(nextDataSourceId);
 
     _changingToNextVideo = false;
   }
 
-  void setupVideoIndex(int index){
+  void setupVideoIndex(int index) {
     if (_changingToNextVideo) {
       return;
     }
