@@ -62,6 +62,9 @@ class BetterPlayerControlsConfiguration {
   ///Flag used to enable skip forward and skip back
   final bool enableSkips;
 
+  /// Flag used to enable/disable back button
+  final bool enableBackButton;
+
   ///Progress bar played color
   final Color progressBarPlayedColor;
 
@@ -200,6 +203,7 @@ class BetterPlayerControlsConfiguration {
     this.enableQualities = true,
     this.enablePip = true,
     this.enableRetry = true,
+    this.enableBackButton = true,
     this.overflowMenuCustomItems = const [],
     this.overflowMenuIcon = Icons.more_vert_outlined,
     this.pipMenuIcon = Icons.picture_in_picture_outlined,

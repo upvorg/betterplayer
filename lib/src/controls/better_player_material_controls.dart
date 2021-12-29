@@ -8,6 +8,7 @@ import 'package:better_player/src/controls/better_player_progress_colors.dart';
 import 'package:better_player/src/core/better_player_controller.dart';
 import 'package:better_player/src/core/better_player_utils.dart';
 import 'package:better_player/src/video_player/video_player.dart';
+import 'package:flutter/cupertino.dart';
 
 // Flutter imports:
 import 'package:flutter/material.dart';
@@ -194,11 +195,43 @@ class _BetterPlayerMaterialControlsState
               duration: _controlsConfiguration.controlsHideTime,
               onEnd: _onPlayerHide,
               child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.transparent, Colors.black.withOpacity(0.5)],
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                  ),
+                ),
                 height: _controlsConfiguration.controlBarHeight,
                 width: double.infinity,
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    if (Navigator.of(context).canPop() &&
+                        _controlsConfiguration.enableBackButton)
+                      IconButton(
+                        icon: Icon(
+                          CupertinoIcons.back,
+                          color: _controlsConfiguration.iconsColor,
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    Expanded(
+                      child: _betterPlayerController
+                                  ?.betterPlayerDataSource?.title !=
+                              null
+                          ? Text(
+                              _betterPlayerController!
+                                  .betterPlayerDataSource!.title!,
+                              style: TextStyle(
+                                color: _controlsConfiguration.textColor,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              maxLines: 1,
+                            )
+                          : const SizedBox(),
+                    ),
                     if (_controlsConfiguration.enablePip)
                       _buildPipButtonWrapperWidget(
                           controlsNotVisible, _onPlayerHide)
@@ -283,6 +316,13 @@ class _BetterPlayerMaterialControlsState
       onEnd: _onPlayerHide,
       child: Container(
         height: _controlsConfiguration.controlBarHeight + 20.0,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.transparent, Colors.black.withOpacity(0.5)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
@@ -298,9 +338,14 @@ class _BetterPlayerMaterialControlsState
                     _buildLiveWidget()
                   else
                     _controlsConfiguration.enableProgressText
-                        ? Expanded(child: _buildPosition())
+                        ? _buildPosition()
                         : const SizedBox(),
-                  const Spacer(),
+                  if (_betterPlayerController!.isLiveStream())
+                    const SizedBox()
+                  else
+                    _controlsConfiguration.enableProgressBar
+                        ? _buildProgressBar()
+                        : const SizedBox(),
                   if (_controlsConfiguration.enableMute)
                     _buildMuteButton(_controller)
                   else
@@ -312,12 +357,6 @@ class _BetterPlayerMaterialControlsState
                 ],
               ),
             ),
-            if (_betterPlayerController!.isLiveStream())
-              const SizedBox()
-            else
-              _controlsConfiguration.enableProgressBar
-                  ? _buildProgressBar()
-                  : const SizedBox(),
           ],
         ),
       ),
@@ -694,7 +733,6 @@ class _BetterPlayerMaterialControlsState
 
   Widget _buildProgressBar() {
     return Expanded(
-      flex: 40,
       child: Container(
         alignment: Alignment.bottomCenter,
         padding: const EdgeInsets.symmetric(horizontal: 12),

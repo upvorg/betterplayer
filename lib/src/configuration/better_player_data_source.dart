@@ -17,6 +17,9 @@ class BetterPlayerDataSource {
   ///Url of the video
   final String url;
 
+  /// Title of the video
+  final String? title;
+
   ///Subtitles configuration
   final List<BetterPlayerSubtitlesSource>? subtitles;
 
@@ -79,6 +82,7 @@ class BetterPlayerDataSource {
   BetterPlayerDataSource(
     this.type,
     this.url, {
+    this.title,
     this.bytes,
     this.subtitles,
     this.liveStream = false,
