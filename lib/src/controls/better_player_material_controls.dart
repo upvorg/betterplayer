@@ -324,7 +324,6 @@ class _BetterPlayerMaterialControlsState
           ),
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             Expanded(
               flex: 75,
@@ -346,7 +345,7 @@ class _BetterPlayerMaterialControlsState
                     _controlsConfiguration.enableProgressBar
                         ? _buildProgressBar()
                         : const SizedBox(),
-                  if (_controlsConfiguration.enableMute)
+                  if (!_controlsConfiguration.enableMute)
                     _buildMuteButton(_controller)
                   else
                     const SizedBox(),
@@ -381,7 +380,7 @@ class _BetterPlayerMaterialControlsState
         child: Container(
           height: _controlsConfiguration.controlBarHeight,
           margin: const EdgeInsets.only(right: 12.0),
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          padding: const EdgeInsets.only(right: 8.0),
           child: Center(
             child: Icon(
               _betterPlayerController!.isFullScreen
@@ -590,7 +589,6 @@ class _BetterPlayerMaterialControlsState
       onTap: _onPlayPause,
       child: Container(
         height: double.infinity,
-        margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Icon(
           controller.value.isPlaying
@@ -609,29 +607,26 @@ class _BetterPlayerMaterialControlsState
         ? _latestValue!.duration!
         : Duration.zero;
 
-    return Padding(
-      padding: _controlsConfiguration.enablePlayPause
-          ? const EdgeInsets.only(right: 24)
-          : const EdgeInsets.symmetric(horizontal: 22),
-      child: RichText(
-        text: TextSpan(
-            text: BetterPlayerUtils.formatDuration(position),
-            style: TextStyle(
-              fontSize: 10.0,
-              color: _controlsConfiguration.textColor,
-              decoration: TextDecoration.none,
-            ),
-            children: <TextSpan>[
-              TextSpan(
-                text: ' / ${BetterPlayerUtils.formatDuration(duration)}',
-                style: TextStyle(
-                  fontSize: 10.0,
-                  color: _controlsConfiguration.textColor,
-                  decoration: TextDecoration.none,
-                ),
-              )
-            ]),
-      ),
+    return RichText(
+      text: TextSpan(
+          text: BetterPlayerUtils.formatDuration(position),
+          style: TextStyle(
+            fontSize: 10.0,
+            fontWeight: FontWeight.bold,
+            color: _controlsConfiguration.textColor,
+            decoration: TextDecoration.none,
+          ),
+          children: <TextSpan>[
+            TextSpan(
+              text: '/${BetterPlayerUtils.formatDuration(duration)}',
+              style: TextStyle(
+                fontSize: 10.0,
+                fontWeight: FontWeight.bold,
+                color: _controlsConfiguration.textColor,
+                decoration: TextDecoration.none,
+              ),
+            )
+          ]),
     );
   }
 

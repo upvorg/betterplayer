@@ -200,12 +200,13 @@ class _ProgressBarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     const height = 2.0;
+    final offsetHeight = height / 2;
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromPoints(
-          Offset(0.0, size.height / 2),
-          Offset(size.width, size.height / 2 + height),
+          Offset(0.0, size.height / 2 - offsetHeight),
+          Offset(size.width, size.height / 2 + height - offsetHeight),
         ),
         const Radius.circular(4.0),
       ),
@@ -233,8 +234,8 @@ class _ProgressBarPainter extends CustomPainter {
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           Rect.fromPoints(
-            Offset(start, size.height / 2),
-            Offset(end, size.height / 2 + height),
+            Offset(start, size.height / 2 - offsetHeight),
+            Offset(end, size.height / 2 + height - offsetHeight),
           ),
           const Radius.circular(4.0),
         ),
@@ -244,15 +245,15 @@ class _ProgressBarPainter extends CustomPainter {
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromPoints(
-          Offset(0.0, size.height / 2),
-          Offset(playedPart, size.height / 2 + height),
+          Offset(0.0, size.height / 2 - offsetHeight),
+          Offset(playedPart, size.height / 2 + height - offsetHeight),
         ),
         const Radius.circular(4.0),
       ),
       colors.playedPaint,
     );
     canvas.drawCircle(
-      Offset(playedPart, size.height / 2 + height / 2),
+      Offset(playedPart, size.height / 2 + height / 2 - offsetHeight),
       height * 3,
       colors.handlePaint,
     );

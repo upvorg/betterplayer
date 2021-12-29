@@ -195,7 +195,7 @@ class BetterPlayerControlsConfiguration {
     this.playerTheme,
     this.showControls = true,
     this.showControlsOnInitialize = true,
-    this.controlBarHeight = 48.0,
+    this.controlBarHeight = 25.0,
     this.liveTextColor = Colors.red,
     this.enableOverflowMenu = true,
     this.enablePlaybackSpeed = true,
