@@ -45,6 +45,9 @@ class _BetterPlayerMaterialControlsState
   BetterPlayerController? _betterPlayerController;
   StreamSubscription? _controlsVisibilityStreamSubscription;
 
+  double get controllIconPadding =>
+      (_betterPlayerController?.isFullScreen ?? false) ? 8 : 12;
+
   BetterPlayerControlsConfiguration get _controlsConfiguration =>
       widget.controlsConfiguration;
 
@@ -86,6 +89,9 @@ class _BetterPlayerMaterialControlsState
           BetterPlayerMultipleGestureDetector.of(context)!.onDoubleTap?.call();
         }
         cancelAndRestartTimer();
+        _betterPlayerController?.isPlaying() ?? false
+            ? _betterPlayerController?.pause()
+            : _betterPlayerController?.play();
       },
       onLongPress: () {
         if (BetterPlayerMultipleGestureDetector.of(context) != null) {
@@ -202,7 +208,6 @@ class _BetterPlayerMaterialControlsState
                     end: Alignment.topCenter,
                   ),
                 ),
-                height: _controlsConfiguration.controlBarHeight,
                 width: double.infinity,
                 child: Row(
                   children: [
@@ -253,7 +258,7 @@ class _BetterPlayerMaterialControlsState
             betterPlayerController!.betterPlayerGlobalKey!);
       },
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.symmetric(horizontal: controllIconPadding),
         child: Icon(
           betterPlayerControlsConfiguration.pipMenuIcon,
           color: betterPlayerControlsConfiguration.iconsColor,
@@ -297,7 +302,7 @@ class _BetterPlayerMaterialControlsState
         onShowMoreClicked();
       },
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.symmetric(horizontal: controllIconPadding),
         child: Icon(
           _controlsConfiguration.overflowMenuIcon,
           color: _controlsConfiguration.iconsColor,
@@ -345,7 +350,7 @@ class _BetterPlayerMaterialControlsState
                     _controlsConfiguration.enableProgressBar
                         ? _buildProgressBar()
                         : const SizedBox(),
-                  if (!_controlsConfiguration.enableMute)
+                  if (_controlsConfiguration.enableMute)
                     _buildMuteButton(_controller)
                   else
                     const SizedBox(),
@@ -379,8 +384,7 @@ class _BetterPlayerMaterialControlsState
         duration: _controlsConfiguration.controlsHideTime,
         child: Container(
           height: _controlsConfiguration.controlBarHeight,
-          margin: const EdgeInsets.only(right: 12.0),
-          padding: const EdgeInsets.only(right: 8.0),
+          padding: EdgeInsets.symmetric(horizontal: controllIconPadding),
           child: Center(
             child: Icon(
               _betterPlayerController!.isFullScreen
@@ -570,7 +574,7 @@ class _BetterPlayerMaterialControlsState
         child: ClipRect(
           child: Container(
             height: _controlsConfiguration.controlBarHeight,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: EdgeInsets.symmetric(horizontal: controllIconPadding),
             child: Icon(
               (_latestValue != null && _latestValue!.volume > 0)
                   ? _controlsConfiguration.muteIcon
@@ -589,7 +593,7 @@ class _BetterPlayerMaterialControlsState
       onTap: _onPlayPause,
       child: Container(
         height: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: EdgeInsets.symmetric(horizontal: controllIconPadding),
         child: Icon(
           controller.value.isPlaying
               ? _controlsConfiguration.pauseIcon
@@ -607,26 +611,29 @@ class _BetterPlayerMaterialControlsState
         ? _latestValue!.duration!
         : Duration.zero;
 
-    return RichText(
-      text: TextSpan(
-          text: BetterPlayerUtils.formatDuration(position),
-          style: TextStyle(
-            fontSize: 10.0,
-            fontWeight: FontWeight.bold,
-            color: _controlsConfiguration.textColor,
-            decoration: TextDecoration.none,
-          ),
-          children: <TextSpan>[
-            TextSpan(
-              text: '/${BetterPlayerUtils.formatDuration(duration)}',
-              style: TextStyle(
-                fontSize: 10.0,
-                fontWeight: FontWeight.bold,
-                color: _controlsConfiguration.textColor,
-                decoration: TextDecoration.none,
-              ),
-            )
-          ]),
+    return Padding(
+      padding: EdgeInsets.only(right: controllIconPadding),
+      child: RichText(
+        text: TextSpan(
+            text: BetterPlayerUtils.formatDuration(position),
+            style: TextStyle(
+              fontSize: 10.0,
+              fontWeight: FontWeight.bold,
+              color: _controlsConfiguration.textColor,
+              decoration: TextDecoration.none,
+            ),
+            children: <TextSpan>[
+              TextSpan(
+                text: '/${BetterPlayerUtils.formatDuration(duration)}',
+                style: TextStyle(
+                  fontSize: 10.0,
+                  fontWeight: FontWeight.bold,
+                  color: _controlsConfiguration.textColor,
+                  decoration: TextDecoration.none,
+                ),
+              )
+            ]),
+      ),
     );
   }
 
@@ -729,8 +736,7 @@ class _BetterPlayerMaterialControlsState
   Widget _buildProgressBar() {
     return Expanded(
       child: Container(
-        alignment: Alignment.bottomCenter,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        alignment: Alignment.center,
         child: BetterPlayerMaterialVideoProgressBar(
           _controller,
           _betterPlayerController,
@@ -744,11 +750,11 @@ class _BetterPlayerMaterialControlsState
             cancelAndRestartTimer();
           },
           colors: BetterPlayerProgressColors(
-              playedColor: _controlsConfiguration.progressBarPlayedColor,
-              handleColor: _controlsConfiguration.progressBarHandleColor,
-              bufferedColor: _controlsConfiguration.progressBarBufferedColor,
-              backgroundColor:
-                  _controlsConfiguration.progressBarBackgroundColor),
+            playedColor: _controlsConfiguration.progressBarPlayedColor,
+            handleColor: _controlsConfiguration.progressBarHandleColor,
+            bufferedColor: _controlsConfiguration.progressBarBufferedColor,
+            backgroundColor: _controlsConfiguration.progressBarBackgroundColor,
+          ),
         ),
       ),
     );
