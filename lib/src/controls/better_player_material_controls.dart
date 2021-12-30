@@ -349,7 +349,7 @@ class _BetterPlayerMaterialControlsState
             betterPlayerController!.betterPlayerGlobalKey!);
       },
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: controllIconPadding),
+        padding: EdgeInsets.symmetric(horizontal: controllIconPadding / 2),
         child: Icon(
           betterPlayerControlsConfiguration.pipMenuIcon,
           color: betterPlayerControlsConfiguration.iconsColor,
@@ -370,15 +370,7 @@ class _BetterPlayerMaterialControlsState
             opacity: hideStuff ? 0.0 : 1.0,
             duration: betterPlayerControlsConfiguration.controlsHideTime,
             onEnd: onPlayerHide,
-            child: Container(
-              height: betterPlayerControlsConfiguration.controlBarHeight,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  _buildPipButton(),
-                ],
-              ),
-            ),
+            child: _buildPipButton(),
           );
         } else {
           return const SizedBox();
@@ -393,7 +385,7 @@ class _BetterPlayerMaterialControlsState
         onShowMoreClicked();
       },
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: controllIconPadding),
+        padding: EdgeInsets.symmetric(horizontal: controllIconPadding / 2),
         child: Icon(
           _controlsConfiguration.overflowMenuIcon,
           color: _controlsConfiguration.iconsColor,
