@@ -15,10 +15,12 @@ class BetterPlayerMaterialVideoProgressBar extends StatefulWidget {
     this.onDragStart,
     this.onDragUpdate,
     this.onTapDown,
+    this.duration,
     Key? key,
   })  : colors = colors ?? BetterPlayerProgressColors(),
         super(key: key);
 
+  final Duration? duration;
   final VideoPlayerController? controller;
   final BetterPlayerController? betterPlayerController;
   final BetterPlayerProgressColors colors;
@@ -151,11 +153,10 @@ class _VideoProgressBarState
   }
 
   VideoPlayerValue _getValue() {
-    if (lastSeek != null) {
-      return controller!.value.copyWith(position: lastSeek);
-    } else {
-      return controller!.value;
-    }
+    final _lastSeek = widget.duration ??
+        (lastSeek ?? Duration(seconds: controller!.value.position.inSeconds));
+
+    return controller!.value.copyWith(position: _lastSeek);
   }
 
   void seekToRelativePosition(Offset globalPosition) async {

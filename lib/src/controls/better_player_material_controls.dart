@@ -44,6 +44,12 @@ class _BetterPlayerMaterialControlsState
   VideoPlayerController? _controller;
   BetterPlayerController? _betterPlayerController;
   StreamSubscription? _controlsVisibilityStreamSubscription;
+  double? _latestPlaySpeed;
+
+  int? _latestSeconds;
+  int? _seekedSeconds;
+  bool wasSeeking = false;
+  double? horizontalDragStartPosition;
 
   double get controllIconPadding =>
       (_betterPlayerController?.isFullScreen ?? false) ? 8 : 12;
@@ -84,6 +90,60 @@ class _BetterPlayerMaterialControlsState
             ? cancelAndRestartTimer()
             : changePlayerControlsNotVisible(true);
       },
+      onHorizontalDragStart: (detail) {
+        if (_controller != null && latestValue!.initialized) {
+          wasSeeking = true;
+          _seekedSeconds = 0;
+          _latestSeconds = _controller!.value.position.inSeconds;
+          horizontalDragStartPosition = detail.globalPosition.dx;
+          changePlayerControlsNotVisible(true);
+        }
+      },
+      onHorizontalDragUpdate: (details) {
+        if (wasSeeking) {
+          changePlayerControlsNotVisible(true);
+          final double delta =
+              details.globalPosition.dx - horizontalDragStartPosition!;
+          final seekedSecondsAbs =
+              (delta.abs() / MediaQuery.of(context).size.width) * 90; // 滑动多少秒
+          final seekedSeconds =
+              delta > 0 ? seekedSecondsAbs : -seekedSecondsAbs; //// 滑动多少秒
+          final countSeconds = latestValue!.duration!.inSeconds; // 总秒数
+          final end = _latestSeconds! + seekedSeconds; // 结束秒数
+
+          if (end >= countSeconds) {
+            _seekedSeconds = countSeconds - _latestSeconds!;
+            return;
+          } else if (end <= 0) {
+            _seekedSeconds = -_latestSeconds!;
+            return;
+          }
+          _seekedSeconds = seekedSeconds.toInt();
+        }
+      },
+      onHorizontalDragEnd: (_) async {
+        if (wasSeeking) {
+          await betterPlayerController!.seekTo(
+              Duration(seconds: _latestSeconds! + _seekedSeconds!.toInt()));
+          wasSeeking = false;
+        }
+      },
+      onLongPressStart: (_) {
+        if (_betterPlayerController?.isPlaying() == false) {
+          return;
+        }
+        _latestPlaySpeed = _controller?.value.speed ?? 1.0;
+        if (_.globalPosition.dx >= (MediaQuery.of(context).size.width / 2)) {
+          _controller?.setSpeed(
+              _latestPlaySpeed! * 2 > 2.0 ? 4.0 : _latestPlaySpeed! * 2);
+        }
+      },
+      onLongPressEnd: (_) {
+        if (_latestPlaySpeed != null) {
+          _betterPlayerController?.setSpeed(_latestPlaySpeed!);
+          _latestPlaySpeed = null;
+        }
+      },
       onDoubleTap: () {
         if (BetterPlayerMultipleGestureDetector.of(context) != null) {
           BetterPlayerMultipleGestureDetector.of(context)!.onDoubleTap?.call();
@@ -113,6 +173,37 @@ class _BetterPlayerMaterialControlsState
               right: 0,
               child: _buildTopBar(),
             ),
+            if (_latestPlaySpeed != null)
+              Container(
+                alignment: Alignment.topCenter,
+                margin: EdgeInsets.only(
+                  top: betterPlayerControlsConfiguration.controlBarHeight + 10,
+                ),
+                child: Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(48),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        CupertinoIcons.bolt_fill,
+                        color: betterPlayerControlsConfiguration.iconsColor,
+                        size: 14,
+                      ),
+                      Text(
+                        ' ${_controller?.value.speed ?? 1.0}x',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _controlsConfiguration.textColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             Positioned(bottom: 0, left: 0, right: 0, child: _buildBottomBar()),
             _buildNextVideoWidget(),
           ],
@@ -316,7 +407,7 @@ class _BetterPlayerMaterialControlsState
       return const SizedBox();
     }
     return AnimatedOpacity(
-      opacity: controlsNotVisible ? 0.0 : 1.0,
+      opacity: (controlsNotVisible && !wasSeeking) ? 0.0 : 1.0,
       duration: _controlsConfiguration.controlsHideTime,
       onEnd: _onPlayerHide,
       child: Container(
@@ -615,7 +706,11 @@ class _BetterPlayerMaterialControlsState
       padding: EdgeInsets.only(right: controllIconPadding),
       child: RichText(
         text: TextSpan(
-            text: BetterPlayerUtils.formatDuration(position),
+            text: BetterPlayerUtils.formatDuration(
+              wasSeeking
+                  ? Duration(seconds: _latestSeconds! + _seekedSeconds!)
+                  : position,
+            ),
             style: TextStyle(
               fontSize: 10.0,
               fontWeight: FontWeight.bold,
@@ -718,12 +813,13 @@ class _BetterPlayerMaterialControlsState
 
   void _updateState() {
     if (mounted) {
+      _latestValue = _controller!.value;
       if (!controlsNotVisible ||
           isVideoFinished(_controller!.value) ||
           _wasLoading ||
           isLoading(_controller!.value)) {
         setState(() {
-          _latestValue = _controller!.value;
+          // _latestValue = _controller!.value;
           if (isVideoFinished(_latestValue) &&
               _betterPlayerController?.isLiveStream() == false) {
             changePlayerControlsNotVisible(false);
@@ -755,6 +851,9 @@ class _BetterPlayerMaterialControlsState
             bufferedColor: _controlsConfiguration.progressBarBufferedColor,
             backgroundColor: _controlsConfiguration.progressBarBackgroundColor,
           ),
+          duration: wasSeeking
+              ? Duration(seconds: _latestSeconds! + _seekedSeconds!)
+              : null,
         ),
       ),
     );
