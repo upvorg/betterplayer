@@ -44,6 +44,7 @@ class _BetterPlayerMaterialControlsState
   VideoPlayerController? _controller;
   BetterPlayerController? _betterPlayerController;
   StreamSubscription? _controlsVisibilityStreamSubscription;
+
   double? _latestPlaySpeed;
 
   int? _latestSeconds;
@@ -51,8 +52,13 @@ class _BetterPlayerMaterialControlsState
   bool wasSeeking = false;
   double? horizontalDragStartPosition;
 
-  double get controllIconPadding =>
-      (_betterPlayerController?.isFullScreen ?? false) ? 8 : 12;
+  bool get isFullScreen => _betterPlayerController?.isFullScreen ?? false;
+
+  double get controllIconPadding => isFullScreen ? 16 : 12;
+
+  double get controllIconSize => isFullScreen ? 30 : 24;
+
+  double get controlBarHeight => isFullScreen ? 48 : 36;
 
   BetterPlayerControlsConfiguration get _controlsConfiguration =>
       widget.controlsConfiguration;
@@ -142,6 +148,7 @@ class _BetterPlayerMaterialControlsState
         if (_latestPlaySpeed != null) {
           _betterPlayerController?.setSpeed(_latestPlaySpeed!);
           _latestPlaySpeed = null;
+          setState(() {});
         }
       },
       onDoubleTap: () {
@@ -300,6 +307,8 @@ class _BetterPlayerMaterialControlsState
                   ),
                 ),
                 width: double.infinity,
+                height: controlBarHeight,
+                padding: EdgeInsets.symmetric(horizontal: controllIconPadding),
                 child: Row(
                   children: [
                     if (Navigator.of(context).canPop() &&
@@ -308,6 +317,7 @@ class _BetterPlayerMaterialControlsState
                         icon: Icon(
                           CupertinoIcons.back,
                           color: _controlsConfiguration.iconsColor,
+                          size: controllIconSize,
                         ),
                         onPressed: () {
                           Navigator.of(context).pop();
@@ -403,7 +413,8 @@ class _BetterPlayerMaterialControlsState
       duration: _controlsConfiguration.controlsHideTime,
       onEnd: _onPlayerHide,
       child: Container(
-        height: _controlsConfiguration.controlBarHeight + 20.0,
+        height: controlBarHeight + 20.0,
+        padding: EdgeInsets.symmetric(horizontal: controllIconPadding),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [Colors.transparent, Colors.black.withOpacity(0.5)],
@@ -454,8 +465,10 @@ class _BetterPlayerMaterialControlsState
     return Text(
       _betterPlayerController!.translations.controlsLive,
       style: TextStyle(
-          color: _controlsConfiguration.liveTextColor,
-          fontWeight: FontWeight.bold),
+        color: _controlsConfiguration.liveTextColor,
+        fontWeight: FontWeight.bold,
+        fontSize: isFullScreen ? 12.0 : 10.0,
+      ),
     );
   }
 
@@ -466,14 +479,13 @@ class _BetterPlayerMaterialControlsState
         opacity: controlsNotVisible ? 0.0 : 1.0,
         duration: _controlsConfiguration.controlsHideTime,
         child: Container(
-          height: _controlsConfiguration.controlBarHeight,
-          padding: EdgeInsets.symmetric(horizontal: controllIconPadding),
           child: Center(
             child: Icon(
               _betterPlayerController!.isFullScreen
                   ? _controlsConfiguration.fullscreenDisableIcon
                   : _controlsConfiguration.fullscreenEnableIcon,
               color: _controlsConfiguration.iconsColor,
+              size: controllIconSize,
             ),
           ),
         ),
@@ -506,15 +518,7 @@ class _BetterPlayerMaterialControlsState
           : Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                if (_controlsConfiguration.enableSkips)
-                  _buildSkipButton()
-                else
-                  const SizedBox(),
                 _buildReplayButton(_controller!),
-                if (_controlsConfiguration.enableSkips)
-                  _buildForwardButton()
-                else
-                  const SizedBox(),
               ],
             ),
     );
@@ -541,28 +545,6 @@ class _BetterPlayerMaterialControlsState
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildSkipButton() {
-    return _buildHitAreaClickableButton(
-      icon: Icon(
-        _controlsConfiguration.skipBackIcon,
-        size: 24,
-        color: _controlsConfiguration.iconsColor,
-      ),
-      onClicked: skipBack,
-    );
-  }
-
-  Widget _buildForwardButton() {
-    return _buildHitAreaClickableButton(
-      icon: Icon(
-        _controlsConfiguration.skipForwardIcon,
-        size: 24,
-        color: _controlsConfiguration.iconsColor,
-      ),
-      onClicked: skipForward,
     );
   }
 
@@ -657,7 +639,7 @@ class _BetterPlayerMaterialControlsState
         child: ClipRect(
           child: Container(
             height: _controlsConfiguration.controlBarHeight,
-            padding: EdgeInsets.symmetric(horizontal: controllIconPadding),
+            padding: EdgeInsets.only(right: controllIconPadding),
             child: Icon(
               (_latestValue != null && _latestValue!.volume > 0)
                   ? _controlsConfiguration.muteIcon
@@ -676,12 +658,13 @@ class _BetterPlayerMaterialControlsState
       onTap: _onPlayPause,
       child: Container(
         height: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: controllIconPadding),
+        padding: EdgeInsets.only(right: controllIconPadding),
         child: Icon(
           controller.value.isPlaying
               ? _controlsConfiguration.pauseIcon
               : _controlsConfiguration.playIcon,
           color: _controlsConfiguration.iconsColor,
+          size: controllIconSize,
         ),
       ),
     );
@@ -704,7 +687,7 @@ class _BetterPlayerMaterialControlsState
                   : position,
             ),
             style: TextStyle(
-              fontSize: 10.0,
+              fontSize: isFullScreen ? 12.0 : 10.0,
               fontWeight: FontWeight.bold,
               color: _controlsConfiguration.textColor,
               decoration: TextDecoration.none,
@@ -713,7 +696,7 @@ class _BetterPlayerMaterialControlsState
               TextSpan(
                 text: '/${BetterPlayerUtils.formatDuration(duration)}',
                 style: TextStyle(
-                  fontSize: 10.0,
+                  fontSize: isFullScreen ? 12.0 : 10.0,
                   fontWeight: FontWeight.bold,
                   color: _controlsConfiguration.textColor,
                   decoration: TextDecoration.none,
@@ -825,6 +808,7 @@ class _BetterPlayerMaterialControlsState
     return Expanded(
       child: Container(
         alignment: Alignment.center,
+        padding: EdgeInsets.only(right: controllIconPadding),
         child: BetterPlayerMaterialVideoProgressBar(
           _controller,
           _betterPlayerController,
