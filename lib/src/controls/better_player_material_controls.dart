@@ -58,7 +58,7 @@ class _BetterPlayerMaterialControlsState
 
   double get controllIconSize => isFullScreen ? 30 : 24;
 
-  double get controlBarHeight => isFullScreen ? 48 : 36;
+  double get controlBarHeight => isFullScreen ? 48 : 28;
 
   BetterPlayerControlsConfiguration get _controlsConfiguration =>
       widget.controlsConfiguration;
@@ -96,18 +96,21 @@ class _BetterPlayerMaterialControlsState
             ? cancelAndRestartTimer()
             : changePlayerControlsNotVisible(true);
       },
+      onVerticalDragStart: (_) {},
+      onVerticalDragUpdate: (_) {},
+      onVerticalDragEnd: (_) {},
       onHorizontalDragStart: (detail) {
         if (_controller != null && latestValue!.initialized) {
           wasSeeking = true;
           _seekedSeconds = 0;
           _latestSeconds = _controller!.value.position.inSeconds;
           horizontalDragStartPosition = detail.globalPosition.dx;
-          changePlayerControlsNotVisible(true);
+          cancelAndRestartTimer();
         }
       },
       onHorizontalDragUpdate: (details) {
         if (wasSeeking) {
-          changePlayerControlsNotVisible(true);
+          cancelAndRestartTimer();
           final double delta =
               details.globalPosition.dx - horizontalDragStartPosition!;
           final seekedSecondsAbs =
@@ -413,7 +416,7 @@ class _BetterPlayerMaterialControlsState
       duration: _controlsConfiguration.controlsHideTime,
       onEnd: _onPlayerHide,
       child: Container(
-        height: controlBarHeight + 20.0,
+        height: controlBarHeight,
         padding: EdgeInsets.symmetric(horizontal: controllIconPadding),
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -475,18 +478,14 @@ class _BetterPlayerMaterialControlsState
   Widget _buildExpandButton() {
     return BetterPlayerMaterialClickableWidget(
       onTap: _onExpandCollapse,
-      child: AnimatedOpacity(
-        opacity: controlsNotVisible ? 0.0 : 1.0,
-        duration: _controlsConfiguration.controlsHideTime,
-        child: Container(
-          child: Center(
-            child: Icon(
-              _betterPlayerController!.isFullScreen
-                  ? _controlsConfiguration.fullscreenDisableIcon
-                  : _controlsConfiguration.fullscreenEnableIcon,
-              color: _controlsConfiguration.iconsColor,
-              size: controllIconSize,
-            ),
+      child: Container(
+        child: Center(
+          child: Icon(
+            _betterPlayerController!.isFullScreen
+                ? _controlsConfiguration.fullscreenDisableIcon
+                : _controlsConfiguration.fullscreenEnableIcon,
+            color: _controlsConfiguration.iconsColor,
+            size: controllIconSize,
           ),
         ),
       ),

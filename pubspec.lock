@@ -104,7 +104,14 @@ packages:
       name: flutter_widget_from_html_core
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.7.0"
+    version: "0.8.4"
+  fwfh_text_style:
+    dependency: transitive
+    description:
+      name: fwfh_text_style
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.7.2"
   html:
     dependency: transitive
     description:
@@ -203,13 +210,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.4"
-  pedantic:
-    dependency: "direct main"
-    description:
-      name: pedantic
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.11.1"
   petitparser:
     dependency: transitive
     description:
@@ -364,4 +364,4 @@ packages:
     version: "5.3.1"
 sdks:
   dart: ">=2.15.0-7.0.dev <3.0.0"
-  flutter: ">=2.5.0"
+  flutter: ">=2.6.0-0"
