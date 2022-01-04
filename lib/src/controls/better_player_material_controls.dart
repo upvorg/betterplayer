@@ -67,7 +67,7 @@ class _BetterPlayerMaterialControlsState
 
   double get controllIconSize => isFullScreen ? 30 : 24;
 
-  double get controlBarHeight => isFullScreen ? 48 : 30;
+  double get controlBarHeight => isFullScreen ? 48 : 35;
 
   BetterPlayerControlsConfiguration get _controlsConfiguration =>
       widget.controlsConfiguration;
@@ -96,159 +96,181 @@ class _BetterPlayerMaterialControlsState
         child: _buildErrorWidget(),
       );
     }
-    return GestureDetector(
-      onTap: () {
-        if (BetterPlayerMultipleGestureDetector.of(context) != null) {
-          BetterPlayerMultipleGestureDetector.of(context)!.onTap?.call();
-        }
-        controlsNotVisible
-            ? cancelAndRestartTimer()
-            : changePlayerControlsNotVisible(true);
-      },
-
-      // volume & screen brightness
-      onVerticalDragStart: (d) async {
-        if (d.localPosition.dx > (MediaQuery.of(context).size.width / 2)) {
-          isVolumeDragging = true;
-        } else {
-          isScreenBrightnessDragging = true;
-        }
-
-        setState(() {});
-        verticalDragStartPosition = d.localPosition.dy;
-      },
-      onVerticalDragUpdate: (d) async {
-        if (isVolumeDragging || isScreenBrightnessDragging) {
-          final drag = -(d.localPosition.dy - verticalDragStartPosition!);
-          final h = MediaQuery.of(context).size.width /
-              (_betterPlayerController!.getAspectRatio() ?? 16 / 9); // 获取高度
-          verticalDragStartPosition = d.localPosition.dy;
-          final double percent = drag / h;
-
-          if (isVolumeDragging) {
-            final volume = _latestVolume! + percent * maxVolume!;
-            _latestVolume = volume < 0
-                ? 0
-                : volume > maxVolume!
-                    ? maxVolume!.toDouble()
-                    : volume;
-            await Volume.setVol(
-              _latestVolume!.toInt(),
-              showVolumeUI: ShowVolumeUI.HIDE,
-            );
-          } else {
-            final brightness = _lastScreenBrightness! + percent * 1.0;
-            _lastScreenBrightness = brightness < 0
-                ? 0
-                : brightness > 1
-                    ? 1
-                    : brightness;
-            await ScreenBrightness()
-                .setScreenBrightness(_lastScreenBrightness!);
-          }
-          print('_lastScreenBrightness $_lastScreenBrightness');
-          setState(() {});
-        }
-        ;
-      },
-      onVerticalDragEnd: (d) {
-        isVolumeDragging = false;
-        isScreenBrightnessDragging = false;
-        setState(() {});
-      },
-      // video progress
-      onHorizontalDragStart: (detail) {
-        if (_controller != null && latestValue!.initialized) {
-          wasSeeking = true;
-          _seekedSeconds = 0;
-          _latestSeconds = _controller!.value.position.inSeconds;
-          horizontalDragStartPosition = detail.localPosition.dx;
-          cancelAndRestartTimer();
-        }
-      },
-      onHorizontalDragUpdate: (details) {
-        if (wasSeeking) {
-          cancelAndRestartTimer();
-          final double delta =
-              details.localPosition.dx - horizontalDragStartPosition!;
-          final seekedSeconds =
-              (delta / MediaQuery.of(context).size.width) * 90; // 滑动多少秒
-          final countSeconds = latestValue!.duration!.inSeconds; // 总秒数
-          final end = _latestSeconds! + seekedSeconds; // 结束秒数
-
-          if (end >= countSeconds) {
-            _seekedSeconds = countSeconds - _latestSeconds!;
-            return;
-          } else if (end <= 0) {
-            _seekedSeconds = -_latestSeconds!;
-            return;
-          }
-          _seekedSeconds = seekedSeconds.toInt();
-        }
-      },
-      onHorizontalDragEnd: (_) async {
-        if (wasSeeking) {
-          await betterPlayerController!.seekTo(
-              Duration(seconds: _latestSeconds! + _seekedSeconds!.toInt()));
-          wasSeeking = false;
-        }
-      },
-      //long press change play speed
-      onLongPressStart: (_) {
-        if (_betterPlayerController?.isPlaying() == false) {
-          return;
-        }
-        _latestPlaySpeed = _controller?.value.speed ?? 1.0;
-        if (_.localPosition.dx >= (MediaQuery.of(context).size.width / 2)) {
-          _controller?.setSpeed(
-              _latestPlaySpeed! * 2 > 2.0 ? 4.0 : _latestPlaySpeed! * 2);
-        }
-      },
-      onLongPressEnd: (_) {
-        if (_latestPlaySpeed != null) {
-          _betterPlayerController?.setSpeed(_latestPlaySpeed!);
-          _latestPlaySpeed = null;
-          setState(() {});
-        }
-      },
-      // double tap play | pause
-      onDoubleTap: () {
-        if (BetterPlayerMultipleGestureDetector.of(context) != null) {
-          BetterPlayerMultipleGestureDetector.of(context)!.onDoubleTap?.call();
-        }
-        cancelAndRestartTimer();
-        _betterPlayerController?.isPlaying() ?? false
-            ? _betterPlayerController?.pause()
-            : _betterPlayerController?.play();
-      },
-      onLongPress: () {
-        if (BetterPlayerMultipleGestureDetector.of(context) != null) {
-          BetterPlayerMultipleGestureDetector.of(context)!.onLongPress?.call();
-        }
-      },
-      child: AbsorbPointer(
-        absorbing: controlsNotVisible,
-        child: Stack(
-          fit: StackFit.expand,
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Column(
           children: [
-            if (_wasLoading)
-              Center(child: _buildLoadingWidget())
-            else
-              _buildHitArea(),
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
+            AbsorbPointer(
+              absorbing: controlsNotVisible,
               child: _buildTopBar(),
             ),
-            if (_latestPlaySpeed != null) _buildPlayerSpeedWidget(),
-            if (isVolumeDragging || isScreenBrightnessDragging)
-              _buildVolumeWidget(),
-            Positioned(bottom: 0, left: 0, right: 0, child: _buildBottomBar()),
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  if (BetterPlayerMultipleGestureDetector.of(context) != null) {
+                    BetterPlayerMultipleGestureDetector.of(context)!
+                        .onTap
+                        ?.call();
+                  }
+                  controlsNotVisible
+                      ? cancelAndRestartTimer()
+                      : changePlayerControlsNotVisible(true);
+                },
+
+                // volume & screen brightness
+                onVerticalDragStart: (d) async {
+                  if (d.localPosition.dx >
+                      (MediaQuery.of(context).size.width / 2)) {
+                    isVolumeDragging = true;
+                  } else {
+                    isScreenBrightnessDragging = true;
+                  }
+
+                  setState(() {});
+                  verticalDragStartPosition = d.localPosition.dy;
+                },
+                onVerticalDragUpdate: (d) async {
+                  if (isVolumeDragging || isScreenBrightnessDragging) {
+                    final drag =
+                        -(d.localPosition.dy - verticalDragStartPosition!);
+                    final h = MediaQuery.of(context).size.width /
+                        (_betterPlayerController!.getAspectRatio() ??
+                            16 / 9); // 获取高度
+                    verticalDragStartPosition = d.localPosition.dy;
+                    final double percent = drag / h;
+
+                    if (isVolumeDragging) {
+                      final volume = _latestVolume! + percent * maxVolume!;
+                      _latestVolume = volume < 0
+                          ? 0
+                          : volume > maxVolume!
+                              ? maxVolume!.toDouble()
+                              : volume;
+                      await Volume.setVol(
+                        _latestVolume!.toInt(),
+                        showVolumeUI: ShowVolumeUI.HIDE,
+                      );
+                    } else {
+                      final brightness = _lastScreenBrightness! + percent * 1.0;
+                      _lastScreenBrightness = brightness < 0
+                          ? 0
+                          : brightness > 1
+                              ? 1
+                              : brightness;
+                      await ScreenBrightness()
+                          .setScreenBrightness(_lastScreenBrightness!);
+                    }
+                    setState(() {});
+                  }
+                  ;
+                },
+                onVerticalDragEnd: (d) {
+                  isVolumeDragging = false;
+                  isScreenBrightnessDragging = false;
+                  setState(() {});
+                },
+                // video progress
+                onHorizontalDragStart: (detail) {
+                  if (_controller != null && latestValue!.initialized) {
+                    wasSeeking = true;
+                    _seekedSeconds = 0;
+                    _latestSeconds = _controller!.value.position.inSeconds;
+                    horizontalDragStartPosition = detail.localPosition.dx;
+                    cancelAndRestartTimer();
+                  }
+                },
+                onHorizontalDragUpdate: (details) {
+                  if (wasSeeking) {
+                    cancelAndRestartTimer();
+                    final double delta =
+                        details.localPosition.dx - horizontalDragStartPosition!;
+                    final seekedSeconds =
+                        (delta / MediaQuery.of(context).size.width) *
+                            90; // 滑动多少秒
+                    final countSeconds =
+                        latestValue!.duration!.inSeconds; // 总秒数
+                    final end = _latestSeconds! + seekedSeconds; // 结束秒数
+
+                    if (end >= countSeconds) {
+                      _seekedSeconds = countSeconds - _latestSeconds!;
+                      return;
+                    } else if (end <= 0) {
+                      _seekedSeconds = -_latestSeconds!;
+                      return;
+                    }
+                    _seekedSeconds = seekedSeconds.toInt();
+                  }
+                },
+                onHorizontalDragEnd: (_) async {
+                  if (wasSeeking) {
+                    await betterPlayerController!.seekTo(Duration(
+                        seconds: _latestSeconds! + _seekedSeconds!.toInt()));
+                    wasSeeking = false;
+                  }
+                },
+                //long press change play speed
+                onLongPressStart: (_) {
+                  if (_betterPlayerController?.isPlaying() == false) {
+                    return;
+                  }
+                  _latestPlaySpeed = _controller?.value.speed ?? 1.0;
+                  if (_.localPosition.dx >=
+                      (MediaQuery.of(context).size.width / 2)) {
+                    _controller?.setSpeed(_latestPlaySpeed! * 2 > 2.0
+                        ? 4.0
+                        : _latestPlaySpeed! * 2);
+                  }
+                },
+                onLongPressEnd: (_) {
+                  if (_latestPlaySpeed != null) {
+                    _betterPlayerController?.setSpeed(_latestPlaySpeed!);
+                    _latestPlaySpeed = null;
+                    setState(() {});
+                  }
+                },
+                // double tap play | pause
+                onDoubleTap: () {
+                  if (BetterPlayerMultipleGestureDetector.of(context) != null) {
+                    BetterPlayerMultipleGestureDetector.of(context)!
+                        .onDoubleTap
+                        ?.call();
+                  }
+                  cancelAndRestartTimer();
+                  _betterPlayerController?.isPlaying() ?? false
+                      ? _betterPlayerController?.pause()
+                      : _betterPlayerController?.play();
+                },
+                onLongPress: () {
+                  if (BetterPlayerMultipleGestureDetector.of(context) != null) {
+                    BetterPlayerMultipleGestureDetector.of(context)!
+                        .onLongPress
+                        ?.call();
+                  }
+                },
+                child: Stack(
+                  children: [
+                    _wasLoading
+                        ? Center(child: _buildLoadingWidget())
+                        : AbsorbPointer(
+                            absorbing: controlsNotVisible,
+                            child: _buildHitArea(),
+                          ),
+                    if (_latestPlaySpeed != null) _buildPlayerSpeedWidget(),
+                    if (isVolumeDragging || isScreenBrightnessDragging)
+                      _buildVolumeWidget(),
+                  ],
+                ),
+              ),
+            ),
+            AbsorbPointer(
+              absorbing: controlsNotVisible,
+              child: _buildBottomBar(),
+            ),
             _buildNextVideoWidget(),
           ],
         ),
-      ),
+      ],
     );
   }
 
@@ -417,13 +439,13 @@ class _BetterPlayerMaterialControlsState
                   children: [
                     if (Navigator.of(context).canPop() &&
                         _controlsConfiguration.enableBackButton)
-                      IconButton(
-                        icon: Icon(
+                      BetterPlayerMaterialClickableWidget(
+                        child: Icon(
                           CupertinoIcons.back,
                           color: _controlsConfiguration.iconsColor,
                           size: controllIconSize,
                         ),
-                        onPressed: () {
+                        onTap: () {
                           Navigator.of(context).pop();
                         },
                       ),
@@ -498,12 +520,9 @@ class _BetterPlayerMaterialControlsState
       onTap: () {
         onShowMoreClicked();
       },
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: controllIconPadding / 2),
-        child: Icon(
-          _controlsConfiguration.overflowMenuIcon,
-          color: _controlsConfiguration.iconsColor,
-        ),
+      child: Icon(
+        _controlsConfiguration.overflowMenuIcon,
+        color: _controlsConfiguration.iconsColor,
       ),
     );
   }
@@ -610,9 +629,7 @@ class _BetterPlayerMaterialControlsState
 
   Widget _buildMiddleRow() {
     return Container(
-      color: _controlsConfiguration.controlBarColor,
-      width: double.infinity,
-      height: double.infinity,
+      color: Colors.transparent,
       child: _betterPlayerController?.isLiveStream() == true
           ? const SizedBox()
           : Row(
@@ -846,8 +863,6 @@ class _BetterPlayerMaterialControlsState
     maxVolume = await Volume.getMaxVol;
     _latestVolume = (await Volume.getVol).toDouble();
     _lastScreenBrightness = await ScreenBrightness().system;
-
-    print('volume $maxVolume $_latestVolume');
   }
 
   void _onExpandCollapse() {
