@@ -9,6 +9,8 @@ import 'package:better_player/src/core/better_player_controller.dart';
 import 'package:better_player/src/core/better_player_utils.dart';
 import 'package:better_player/src/video_player/video_player.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:screen_brightness/screen_brightness.dart';
+import 'package:volume/volume.dart';
 
 // Flutter imports:
 import 'package:flutter/material.dart';
@@ -35,7 +37,6 @@ class BetterPlayerMaterialControls extends StatefulWidget {
 class _BetterPlayerMaterialControlsState
     extends BetterPlayerControlsState<BetterPlayerMaterialControls> {
   VideoPlayerValue? _latestValue;
-  double? _latestVolume;
   Timer? _hideTimer;
   Timer? _initTimer;
   Timer? _showAfterExpandCollapseTimer;
@@ -52,13 +53,21 @@ class _BetterPlayerMaterialControlsState
   bool wasSeeking = false;
   double? horizontalDragStartPosition;
 
+  int? maxVolume;
+  double? _latestVolume;
+  bool isVolumeDragging = false;
+  double? verticalDragStartPosition;
+
+  double? _lastScreenBrightness;
+  bool isScreenBrightnessDragging = false;
+
   bool get isFullScreen => _betterPlayerController?.isFullScreen ?? false;
 
   double get controllIconPadding => isFullScreen ? 16 : 12;
 
   double get controllIconSize => isFullScreen ? 30 : 24;
 
-  double get controlBarHeight => isFullScreen ? 48 : 28;
+  double get controlBarHeight => isFullScreen ? 48 : 30;
 
   BetterPlayerControlsConfiguration get _controlsConfiguration =>
       widget.controlsConfiguration;
@@ -96,15 +105,64 @@ class _BetterPlayerMaterialControlsState
             ? cancelAndRestartTimer()
             : changePlayerControlsNotVisible(true);
       },
-      onVerticalDragStart: (_) {},
-      onVerticalDragUpdate: (_) {},
-      onVerticalDragEnd: (_) {},
+
+      // volume & screen brightness
+      onVerticalDragStart: (d) async {
+        if (d.localPosition.dx > (MediaQuery.of(context).size.width / 2)) {
+          isVolumeDragging = true;
+        } else {
+          isScreenBrightnessDragging = true;
+        }
+
+        setState(() {});
+        verticalDragStartPosition = d.localPosition.dy;
+      },
+      onVerticalDragUpdate: (d) async {
+        if (isVolumeDragging || isScreenBrightnessDragging) {
+          final drag = -(d.localPosition.dy - verticalDragStartPosition!);
+          final h = MediaQuery.of(context).size.width /
+              (_betterPlayerController!.getAspectRatio() ?? 16 / 9); // 获取高度
+          verticalDragStartPosition = d.localPosition.dy;
+          final double percent = drag / h;
+
+          if (isVolumeDragging) {
+            final volume = _latestVolume! + percent * maxVolume!;
+            _latestVolume = volume < 0
+                ? 0
+                : volume > maxVolume!
+                    ? maxVolume!.toDouble()
+                    : volume;
+            await Volume.setVol(
+              _latestVolume!.toInt(),
+              showVolumeUI: ShowVolumeUI.HIDE,
+            );
+          } else {
+            final brightness = _lastScreenBrightness! + percent * 1.0;
+            _lastScreenBrightness = brightness < 0
+                ? 0
+                : brightness > 1
+                    ? 1
+                    : brightness;
+            await ScreenBrightness()
+                .setScreenBrightness(_lastScreenBrightness!);
+          }
+          print('_lastScreenBrightness $_lastScreenBrightness');
+          setState(() {});
+        }
+        ;
+      },
+      onVerticalDragEnd: (d) {
+        isVolumeDragging = false;
+        isScreenBrightnessDragging = false;
+        setState(() {});
+      },
+      // video progress
       onHorizontalDragStart: (detail) {
         if (_controller != null && latestValue!.initialized) {
           wasSeeking = true;
           _seekedSeconds = 0;
           _latestSeconds = _controller!.value.position.inSeconds;
-          horizontalDragStartPosition = detail.globalPosition.dx;
+          horizontalDragStartPosition = detail.localPosition.dx;
           cancelAndRestartTimer();
         }
       },
@@ -112,11 +170,9 @@ class _BetterPlayerMaterialControlsState
         if (wasSeeking) {
           cancelAndRestartTimer();
           final double delta =
-              details.globalPosition.dx - horizontalDragStartPosition!;
-          final seekedSecondsAbs =
-              (delta.abs() / MediaQuery.of(context).size.width) * 90; // 滑动多少秒
+              details.localPosition.dx - horizontalDragStartPosition!;
           final seekedSeconds =
-              delta > 0 ? seekedSecondsAbs : -seekedSecondsAbs; //// 滑动多少秒
+              (delta / MediaQuery.of(context).size.width) * 90; // 滑动多少秒
           final countSeconds = latestValue!.duration!.inSeconds; // 总秒数
           final end = _latestSeconds! + seekedSeconds; // 结束秒数
 
@@ -137,12 +193,13 @@ class _BetterPlayerMaterialControlsState
           wasSeeking = false;
         }
       },
+      //long press change play speed
       onLongPressStart: (_) {
         if (_betterPlayerController?.isPlaying() == false) {
           return;
         }
         _latestPlaySpeed = _controller?.value.speed ?? 1.0;
-        if (_.globalPosition.dx >= (MediaQuery.of(context).size.width / 2)) {
+        if (_.localPosition.dx >= (MediaQuery.of(context).size.width / 2)) {
           _controller?.setSpeed(
               _latestPlaySpeed! * 2 > 2.0 ? 4.0 : _latestPlaySpeed! * 2);
         }
@@ -154,6 +211,7 @@ class _BetterPlayerMaterialControlsState
           setState(() {});
         }
       },
+      // double tap play | pause
       onDoubleTap: () {
         if (BetterPlayerMultipleGestureDetector.of(context) != null) {
           BetterPlayerMultipleGestureDetector.of(context)!.onDoubleTap?.call();
@@ -183,37 +241,9 @@ class _BetterPlayerMaterialControlsState
               right: 0,
               child: _buildTopBar(),
             ),
-            if (_latestPlaySpeed != null)
-              Container(
-                alignment: Alignment.topCenter,
-                margin: EdgeInsets.only(
-                  top: betterPlayerControlsConfiguration.controlBarHeight + 10,
-                ),
-                child: Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(48),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        CupertinoIcons.bolt_fill,
-                        color: betterPlayerControlsConfiguration.iconsColor,
-                        size: 14,
-                      ),
-                      Text(
-                        ' ${_controller?.value.speed ?? 1.0}x',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: _controlsConfiguration.textColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            if (_latestPlaySpeed != null) _buildPlayerSpeedWidget(),
+            if (isVolumeDragging || isScreenBrightnessDragging)
+              _buildVolumeWidget(),
             Positioned(bottom: 0, left: 0, right: 0, child: _buildBottomBar()),
             _buildNextVideoWidget(),
           ],
@@ -288,6 +318,77 @@ class _BetterPlayerMaterialControlsState
         ),
       );
     }
+  }
+
+  Widget _buildPlayerSpeedWidget() {
+    return Container(
+      alignment: Alignment.topCenter,
+      margin: EdgeInsets.only(top: controlBarHeight + 10),
+      child: Container(
+        padding: EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(48),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              CupertinoIcons.bolt_fill,
+              color: betterPlayerControlsConfiguration.iconsColor,
+              size: 14,
+            ),
+            Text(
+              ' ${_controller?.value.speed ?? 1.0}x',
+              style: TextStyle(
+                fontSize: 12,
+                color: _controlsConfiguration.textColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVolumeWidget() {
+    return Container(
+      color: Colors.transparent,
+      alignment: Alignment.topCenter,
+      margin: EdgeInsets.only(top: controlBarHeight),
+      child: Container(
+        padding: EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(48),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isVolumeDragging
+                  ? CupertinoIcons.volume_down
+                  : CupertinoIcons.brightness,
+              color: _controlsConfiguration.iconsColor,
+              size: 14,
+            ),
+            Container(
+              padding: EdgeInsets.only(left: 4),
+              width: MediaQuery.of(context).size.width / (isFullScreen ? 6 : 5),
+              child: LinearProgressIndicator(
+                value: isVolumeDragging
+                    ? ((_latestVolume ?? 0) / (maxVolume ?? 1)).toDouble()
+                    : _lastScreenBrightness,
+                valueColor: AlwaysStoppedAnimation(
+                  Theme.of(context).primaryColor,
+                ),
+                backgroundColor: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildTopBar() {
@@ -623,14 +724,16 @@ class _BetterPlayerMaterialControlsState
     VideoPlayerController? controller,
   ) {
     return BetterPlayerMaterialClickableWidget(
-      onTap: () {
+      onTap: () async {
         cancelAndRestartTimer();
-        if (_latestValue!.volume == 0) {
-          _betterPlayerController!.setVolume(_latestVolume ?? 0.5);
+        if (_latestVolume == 0) {
+          await Volume.setVol(maxVolume! ~/ 2, showVolumeUI: ShowVolumeUI.HIDE);
+          // _betterPlayerController!.setVolume(_latestVolume!.toDouble() ?? 0.5);
         } else {
-          _latestVolume = controller!.value.volume;
-          _betterPlayerController!.setVolume(0.0);
+          _latestVolume = 0;
+          await Volume.setVol(0, showVolumeUI: ShowVolumeUI.HIDE);
         }
+        setState(() {});
       },
       child: AnimatedOpacity(
         opacity: controlsNotVisible ? 0.0 : 1.0,
@@ -640,7 +743,7 @@ class _BetterPlayerMaterialControlsState
             height: _controlsConfiguration.controlBarHeight,
             padding: EdgeInsets.only(right: controllIconPadding),
             child: Icon(
-              (_latestValue != null && _latestValue!.volume > 0)
+              ((_latestVolume ?? 0) > 0)
                   ? _controlsConfiguration.muteIcon
                   : _controlsConfiguration.unMuteIcon,
               color: _controlsConfiguration.iconsColor,
@@ -738,6 +841,13 @@ class _BetterPlayerMaterialControlsState
         cancelAndRestartTimer();
       }
     });
+
+    await Volume.controlVolume(AudioManager.STREAM_MUSIC);
+    maxVolume = await Volume.getMaxVol;
+    _latestVolume = (await Volume.getVol).toDouble();
+    _lastScreenBrightness = await ScreenBrightness().system;
+
+    print('volume $maxVolume $_latestVolume');
   }
 
   void _onExpandCollapse() {
