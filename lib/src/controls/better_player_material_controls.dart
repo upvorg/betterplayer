@@ -101,10 +101,7 @@ class _BetterPlayerMaterialControlsState
       children: [
         Column(
           children: [
-            AbsorbPointer(
-              absorbing: controlsNotVisible,
-              child: _buildTopBar(),
-            ),
+            AbsorbPointer(absorbing: controlsNotVisible, child: _buildTopBar()),
             Expanded(
               child: GestureDetector(
                 onTap: () {
@@ -133,6 +130,7 @@ class _BetterPlayerMaterialControlsState
                     _controller?.setSpeed(_latestPlaySpeed! * 2 > 2.0
                         ? 4.0
                         : _latestPlaySpeed! * 2);
+                    setState(() {});
                   }
                 },
                 onLongPressEnd: (_) {
@@ -160,18 +158,18 @@ class _BetterPlayerMaterialControlsState
                         ?.call();
                   }
                 },
-                child: Stack(
-                  children: [
-                    _wasLoading
-                        ? Container(
-                            color: Colors.transparent,
-                            child: Center(child: _buildLoadingWidget()),
-                          )
-                        : _buildHitArea(),
-                    if (_latestPlaySpeed != null) _buildPlayerSpeedWidget(),
-                    if (isVolumeDragging || isScreenBrightnessDragging)
-                      _buildVolumeWidget(),
-                  ],
+                child: Container(
+                  color: Colors.transparent,
+                  child: Stack(
+                    children: [
+                      _wasLoading
+                          ? Center(child: _buildLoadingWidget())
+                          : _buildHitArea(),
+                      if (_latestPlaySpeed != null) _buildPlayerSpeedWidget(),
+                      if (isVolumeDragging || isScreenBrightnessDragging)
+                        _buildVolumeWidget(),
+                    ],
+                  ),
                 ),
               ),
             ),
