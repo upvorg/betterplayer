@@ -121,16 +121,16 @@ class _BetterPlayerMaterialControlsState
                 onHorizontalDragUpdate: _onSeekUpdate,
                 onHorizontalDragEnd: _onSeekEnd,
                 onLongPressStart: (_) {
-                  if (_betterPlayerController?.isPlaying() == false) {
-                    return;
-                  }
-                  _latestPlaySpeed = _controller?.value.speed ?? 1.0;
-                  if (_.localPosition.dx >=
-                      (MediaQuery.of(context).size.width / 2)) {
-                    _controller?.setSpeed(_latestPlaySpeed! * 2 > 2.0
-                        ? 4.0
-                        : _latestPlaySpeed! * 2);
-                    setState(() {});
+                  if (_betterPlayerController?.isPlaying() == true &&
+                      _betterPlayerController?.isLiveStream() == false) {
+                    _latestPlaySpeed = _controller?.value.speed ?? 1.0;
+                    if (_.localPosition.dx >=
+                        (MediaQuery.of(context).size.width / 2)) {
+                      _controller?.setSpeed(_latestPlaySpeed! * 2 > 2.0
+                          ? 4.0
+                          : _latestPlaySpeed! * 2);
+                      setState(() {});
+                    }
                   }
                 },
                 onLongPressEnd: (_) {
@@ -890,7 +890,9 @@ class _BetterPlayerMaterialControlsState
   }
 
   void _onSeekStart(DragStartDetails details) {
-    if (_controller != null && latestValue!.initialized) {
+    if (_controller != null &&
+        latestValue!.initialized &&
+        _betterPlayerController?.isLiveStream() == false) {
       wasSeeking = true;
       _seekedSeconds = 0;
       _latestSeconds = _controller!.value.position.inSeconds;
