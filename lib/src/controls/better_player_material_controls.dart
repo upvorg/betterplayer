@@ -67,7 +67,7 @@ class _BetterPlayerMaterialControlsState
 
   double get controllIconSize => isFullScreen ? 30 : 24;
 
-  double get controlBarHeight => isFullScreen ? 48 : 35;
+  double get controlBarHeight => isFullScreen ? 68 : 48;
 
   BetterPlayerControlsConfiguration get _controlsConfiguration =>
       widget.controlsConfiguration;
