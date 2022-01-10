@@ -477,6 +477,7 @@ class _BetterPlayerMaterialControlsState
                     _controlsConfiguration.enableProgressBar
                         ? _buildProgressBar()
                         : const SizedBox(),
+                  if (_betterPlayerController!.isLiveStream()) Spacer(),
                   if (_controlsConfiguration.enableMute)
                     _buildMuteButton(_controller)
                   else
