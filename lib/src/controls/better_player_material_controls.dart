@@ -164,7 +164,10 @@ class _BetterPlayerMaterialControlsState
                     children: [
                       _wasLoading
                           ? Center(child: _buildLoadingWidget())
-                          : _buildHitArea(),
+                          : AbsorbPointer(
+                              absorbing: controlsNotVisible,
+                              child: _buildHitArea(),
+                            ),
                       if (_latestPlaySpeed != null) _buildPlayerSpeedWidget(),
                       if (isVolumeDragging || isScreenBrightnessDragging)
                         _buildVolumeWidget(),
@@ -255,11 +258,11 @@ class _BetterPlayerMaterialControlsState
   Widget _buildPlayerSpeedWidget() {
     return Container(
       alignment: Alignment.topCenter,
-      margin: EdgeInsets.only(top: controlBarHeight + 10),
       child: Container(
+        margin: EdgeInsets.only(top: 10),
         padding: EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.9),
+          color: Colors.black.withOpacity(0.7),
           borderRadius: BorderRadius.circular(48),
         ),
         child: Row(
@@ -287,11 +290,11 @@ class _BetterPlayerMaterialControlsState
     return Container(
       color: Colors.transparent,
       alignment: Alignment.topCenter,
-      margin: EdgeInsets.only(top: controlBarHeight),
       child: Container(
+        margin: EdgeInsets.only(top: 10),
         padding: EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.9),
+          color: Colors.black.withOpacity(0.7),
           borderRadius: BorderRadius.circular(48),
         ),
         child: Row(
