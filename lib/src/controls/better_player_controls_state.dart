@@ -69,7 +69,8 @@ abstract class BetterPlayerControlsState<T extends StatefulWidget>
       child: Container(
         child: Column(
           children: [
-            if (betterPlayerControlsConfiguration.enablePlaybackSpeed)
+            if (betterPlayerControlsConfiguration.enablePlaybackSpeed &&
+                !betterPlayerController!.isLiveStream())
               _buildMoreOptionsListRow(
                   betterPlayerControlsConfiguration.playbackSpeedIcon,
                   translations.overflowMenuPlaybackSpeed, () {
@@ -498,8 +499,8 @@ abstract class BetterPlayerControlsState<T extends StatefulWidget>
               decoration: BoxDecoration(
                 color: betterPlayerControlsConfiguration.overflowModalColor,
                 borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(24.0),
-                    topRight: Radius.circular(24.0)),
+                    topLeft: Radius.circular(18.0),
+                    topRight: Radius.circular(18.0)),
               ),
               child: Column(
                 children: children,

@@ -376,7 +376,9 @@ class _BetterPlayerMaterialControlsState
                     ),
                     if (_controlsConfiguration.enablePip)
                       _buildPipButtonWrapperWidget(
-                          controlsNotVisible, _onPlayerHide)
+                        controlsNotVisible,
+                        _onPlayerHide,
+                      )
                     else
                       const SizedBox(),
                     _buildMoreButton(),
@@ -395,7 +397,7 @@ class _BetterPlayerMaterialControlsState
             betterPlayerController!.betterPlayerGlobalKey!);
       },
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: controllIconPadding / 2),
+        padding: EdgeInsets.symmetric(horizontal: controllIconPadding),
         child: Icon(
           betterPlayerControlsConfiguration.pipMenuIcon,
           color: betterPlayerControlsConfiguration.iconsColor,
