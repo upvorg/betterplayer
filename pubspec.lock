@@ -348,7 +348,7 @@ packages:
     description:
       path: "."
       ref: HEAD
-      resolved-ref: eef5715b02fec8bd1c3e7b75261fb6977e2c18d4
+      resolved-ref: "7ac1e18ec0190171ba0984420158d7441b4acc1e"
       url: "https://github.com/upvorg/Volume_Flutter.git"
     source: git
     version: "1.0.1"
@@ -358,7 +358,7 @@ packages:
       name: wakelock
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.5.6"
+    version: "0.6.0+1"
   wakelock_macos:
     dependency: transitive
     description:
