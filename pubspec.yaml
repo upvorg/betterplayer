@@ -26,7 +26,7 @@ dependencies:
   xml: ^5.3.1
   volume:
     git:
-      url: https://github.com/ashishbeck/Volume_Flutter
+      url: https://github.com/upvorg/Volume_Flutter.git
   screen_brightness: ^0.1.3
 
 dev_dependencies:
