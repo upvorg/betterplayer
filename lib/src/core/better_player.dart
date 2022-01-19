@@ -10,7 +10,11 @@ import 'package:wakelock/wakelock.dart';
 
 ///Widget which uses provided controller to render video player.
 class BetterPlayer extends StatefulWidget {
-  const BetterPlayer({Key? key, required this.controller}) : super(key: key);
+  BetterPlayer({
+    Key? key,
+    required this.controller,
+    this.betterPlayerPlaylistController,
+  }) : super(key: key);
 
   factory BetterPlayer.network(
     String url, {
@@ -37,6 +41,7 @@ class BetterPlayer extends StatefulWidget {
       );
 
   final BetterPlayerController controller;
+  final BetterPlayerPlaylistController? betterPlayerPlaylistController;
 
   @override
   _BetterPlayerState createState() {

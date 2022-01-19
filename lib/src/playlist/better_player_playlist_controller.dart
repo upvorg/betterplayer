@@ -5,7 +5,7 @@ import 'package:better_player/better_player.dart';
 ///Controller used to manage playlist player.
 class BetterPlayerPlaylistController {
   ///List of data sources set for playlist.
-  final List<BetterPlayerDataSource> _betterPlayerDataSourceList;
+  final List<BetterPlayerDataSource> betterPlayerDataSourceList;
 
   //General configuration of Better Player
   final BetterPlayerConfiguration betterPlayerConfiguration;
@@ -26,11 +26,11 @@ class BetterPlayerPlaylistController {
   bool _changingToNextVideo = false;
 
   BetterPlayerPlaylistController(
-    this._betterPlayerDataSourceList, {
+    this.betterPlayerDataSourceList, {
     this.betterPlayerConfiguration = const BetterPlayerConfiguration(),
     this.betterPlayerPlaylistConfiguration =
         const BetterPlayerPlaylistConfiguration(),
-  }) : assert(_betterPlayerDataSourceList.isNotEmpty,
+  }) : assert(betterPlayerDataSourceList.isNotEmpty,
             "Better Player data source list can't be empty") {
     _setup();
   }
@@ -40,10 +40,11 @@ class BetterPlayerPlaylistController {
     _betterPlayerController ??= BetterPlayerController(
       betterPlayerConfiguration,
       betterPlayerPlaylistConfiguration: betterPlayerPlaylistConfiguration,
+      betterPlayerPlaylistController: this,
     );
 
     var initialStartIndex = betterPlayerPlaylistConfiguration.initialStartIndex;
-    if (initialStartIndex >= _betterPlayerDataSourceList.length) {
+    if (initialStartIndex >= betterPlayerDataSourceList.length) {
       initialStartIndex = 0;
     }
 
@@ -62,8 +63,8 @@ class BetterPlayerPlaylistController {
   /// source list. Previous data source list will be removed.
   void setupDataSourceList(List<BetterPlayerDataSource> dataSourceList) {
     _betterPlayerController?.pause();
-    _betterPlayerDataSourceList.clear();
-    _betterPlayerDataSourceList.addAll(dataSourceList);
+    betterPlayerDataSourceList.clear();
+    betterPlayerDataSourceList.addAll(dataSourceList);
     _setup();
   }
 
@@ -114,23 +115,23 @@ class BetterPlayerPlaylistController {
     }
   }
 
-  ///Setup data source with index based on [_betterPlayerDataSourceList] provided
+  ///Setup data source with index based on [betterPlayerDataSourceList] provided
   ///in constructor. Index must
   void setupDataSource(int index) {
     assert(
-        index >= 0 && index < _betterPlayerDataSourceList.length,
+        index >= 0 && index < betterPlayerDataSourceList.length,
         "Index must be greater than 0 and less than size of data source "
         "list - 1");
     if (index <= _dataSourceLength) {
       _currentDataSourceIndex = index;
       _betterPlayerController!
-          .setupDataSource(_betterPlayerDataSourceList[index]);
+          .setupDataSource(betterPlayerDataSourceList[index]);
     }
   }
 
   ///Get index of next data source. If current index is less than
-  ///[_betterPlayerDataSourceList] size then next element will be picked, otherwise
-  ///if loops is enabled then first element of [_betterPlayerDataSourceList] will
+  ///[betterPlayerDataSourceList] size then next element will be picked, otherwise
+  ///if loops is enabled then first element of [betterPlayerDataSourceList] will
   ///be picked, otherwise -1 will be returned, indicating that player should
   ///stop changing videos.
   int _getNextDataSourceIndex() {
@@ -146,11 +147,11 @@ class BetterPlayerPlaylistController {
     }
   }
 
-  ///Get index of currently played source, based on [_betterPlayerDataSourceList]
+  ///Get index of currently played source, based on [betterPlayerDataSourceList]
   int get currentDataSourceIndex => _currentDataSourceIndex;
 
-  ///Get size of [_betterPlayerDataSourceList]
-  int get _dataSourceLength => _betterPlayerDataSourceList.length;
+  ///Get size of [betterPlayerDataSourceList]
+  int get _dataSourceLength => betterPlayerDataSourceList.length;
 
   ///Get BetterPlayerController instance
   BetterPlayerController? get betterPlayerController => _betterPlayerController;

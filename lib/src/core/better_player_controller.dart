@@ -25,6 +25,9 @@ class BetterPlayerController {
   ///General configuration used in controller instance.
   final BetterPlayerConfiguration betterPlayerConfiguration;
 
+  ///PlayerPlaylistController configuration used in controller instance.
+  final BetterPlayerPlaylistController? betterPlayerPlaylistController;
+
   ///Playlist configuration used in controller instance.
   final BetterPlayerPlaylistConfiguration? betterPlayerPlaylistConfiguration;
 
@@ -213,6 +216,7 @@ class BetterPlayerController {
   BetterPlayerController(
     this.betterPlayerConfiguration, {
     this.betterPlayerPlaylistConfiguration,
+    this.betterPlayerPlaylistController,
     BetterPlayerDataSource? betterPlayerDataSource,
   }) {
     this._betterPlayerControlsConfiguration =

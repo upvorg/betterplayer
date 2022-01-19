@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:better_player/src/configuration/better_player_controls_configuration.dart';
+import 'package:better_player/src/configuration/better_player_data_source.dart';
 import 'package:better_player/src/controls/better_player_clickable_widget.dart';
 import 'package:better_player/src/controls/better_player_controls_state.dart';
 import 'package:better_player/src/controls/better_player_material_progress_bar.dart';
@@ -7,6 +8,7 @@ import 'package:better_player/src/controls/better_player_multiple_gesture_detect
 import 'package:better_player/src/controls/better_player_progress_colors.dart';
 import 'package:better_player/src/core/better_player_controller.dart';
 import 'package:better_player/src/core/better_player_utils.dart';
+import 'package:better_player/src/playlist/better_player_playlist_controller.dart';
 import 'package:better_player/src/video_player/video_player.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:screen_brightness/screen_brightness.dart';
@@ -35,7 +37,8 @@ class BetterPlayerMaterialControls extends StatefulWidget {
 }
 
 class _BetterPlayerMaterialControlsState
-    extends BetterPlayerControlsState<BetterPlayerMaterialControls> {
+    extends BetterPlayerControlsState<BetterPlayerMaterialControls>
+    with SingleTickerProviderStateMixin {
   VideoPlayerValue? _latestValue;
   Timer? _hideTimer;
   Timer? _initTimer;
@@ -60,6 +63,19 @@ class _BetterPlayerMaterialControlsState
 
   double? _lastScreenBrightness;
   bool isScreenBrightnessDragging = false;
+
+  bool _isShowEpisodeList = false;
+  late AnimationController? _episodeListAnimationController;
+  late Animation<Offset>? _episodeListAnimation;
+
+  BetterPlayerPlaylistController? get betterPlayerPlaylistController =>
+      betterPlayerController?.betterPlayerPlaylistController;
+
+  bool get isListPlayer =>
+      betterPlayerPlaylistController?.betterPlayerDataSourceList != null;
+
+  List<BetterPlayerDataSource>? get betterPlayerDataSource =>
+      betterPlayerPlaylistController?.betterPlayerDataSourceList;
 
   bool get isFullScreen => _betterPlayerController?.isFullScreen ?? false;
 
@@ -96,97 +112,107 @@ class _BetterPlayerMaterialControlsState
         child: _buildErrorWidget(),
       );
     }
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Column(
-          children: [
-            AbsorbPointer(absorbing: controlsNotVisible, child: _buildTopBar()),
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  if (BetterPlayerMultipleGestureDetector.of(context) != null) {
-                    BetterPlayerMultipleGestureDetector.of(context)!
-                        .onTap
-                        ?.call();
-                  }
-                  controlsNotVisible
-                      ? cancelAndRestartTimer()
-                      : changePlayerControlsNotVisible(true);
-                },
-                onVerticalDragStart: _onVerticalDragStart,
-                onVerticalDragUpdate: _onVerticalDragUpdate,
-                onVerticalDragEnd: _onVerticalDragEnd,
-                onHorizontalDragStart: _onSeekStart,
-                onHorizontalDragUpdate: _onSeekUpdate,
-                onHorizontalDragEnd: _onSeekEnd,
-                onLongPressStart: (_) {
-                  if (_betterPlayerController?.isVideoInitialized() == true &&
-                      _betterPlayerController!.isPlaying() == true &&
-                      _betterPlayerController?.isLiveStream() == false) {
-                    _latestPlaySpeed = _controller?.value.speed ?? 1.0;
-                    if (_.localPosition.dx >=
-                        (MediaQuery.of(context).size.width / 2)) {
-                      _controller?.setSpeed(_latestPlaySpeed! * 2 > 2.0
-                          ? 4.0
-                          : _latestPlaySpeed! * 2);
+    return GestureDetector(
+      onTap: () {
+        if (BetterPlayerMultipleGestureDetector.of(context) != null) {
+          BetterPlayerMultipleGestureDetector.of(context)!.onTap?.call();
+        }
+
+        if (_isShowEpisodeList) {
+          _episodeListAnimationController?.reverse();
+          _isShowEpisodeList = false;
+        } else {
+          controlsNotVisible
+              ? cancelAndRestartTimer()
+              : changePlayerControlsNotVisible(true);
+        }
+      },
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Column(
+            children: [
+              AbsorbPointer(
+                  absorbing: controlsNotVisible, child: _buildTopBar()),
+              Expanded(
+                child: GestureDetector(
+                  onVerticalDragStart: _onVerticalDragStart,
+                  onVerticalDragUpdate: _onVerticalDragUpdate,
+                  onVerticalDragEnd: _onVerticalDragEnd,
+                  onHorizontalDragStart: _onSeekStart,
+                  onHorizontalDragUpdate: _onSeekUpdate,
+                  onHorizontalDragEnd: _onSeekEnd,
+                  onLongPressStart: (_) {
+                    if (_betterPlayerController?.isVideoInitialized() == true &&
+                        _betterPlayerController!.isPlaying() == true &&
+                        _betterPlayerController?.isLiveStream() == false) {
+                      _latestPlaySpeed = _controller?.value.speed ?? 1.0;
+                      if (_.localPosition.dx >=
+                          (MediaQuery.of(context).size.width / 2)) {
+                        _controller?.setSpeed(_latestPlaySpeed! * 2 > 2.0
+                            ? 4.0
+                            : _latestPlaySpeed! * 2);
+                        setState(() {});
+                      }
+                    }
+                  },
+                  onLongPressEnd: (_) {
+                    if (_latestPlaySpeed != null) {
+                      _betterPlayerController?.setSpeed(_latestPlaySpeed!);
+                      _latestPlaySpeed = null;
                       setState(() {});
                     }
-                  }
-                },
-                onLongPressEnd: (_) {
-                  if (_latestPlaySpeed != null) {
-                    _betterPlayerController?.setSpeed(_latestPlaySpeed!);
-                    _latestPlaySpeed = null;
-                    setState(() {});
-                  }
-                },
-                onDoubleTap: () {
-                  if (BetterPlayerMultipleGestureDetector.of(context) != null) {
-                    BetterPlayerMultipleGestureDetector.of(context)!
-                        .onDoubleTap
-                        ?.call();
-                  }
-                  cancelAndRestartTimer();
-                  if (_betterPlayerController?.isVideoInitialized() == true) {
-                    _betterPlayerController!.isPlaying()!
-                        ? _betterPlayerController?.pause()
-                        : _betterPlayerController?.play();
-                  }
-                },
-                onLongPress: () {
-                  if (BetterPlayerMultipleGestureDetector.of(context) != null) {
-                    BetterPlayerMultipleGestureDetector.of(context)!
-                        .onLongPress
-                        ?.call();
-                  }
-                },
-                child: Container(
-                  color: Colors.transparent,
-                  child: Stack(
-                    children: [
-                      _wasLoading
-                          ? Center(child: _buildLoadingWidget())
-                          : AbsorbPointer(
-                              absorbing: controlsNotVisible,
-                              child: _buildHitArea(),
-                            ),
-                      if (_latestPlaySpeed != null) _buildPlayerSpeedWidget(),
-                      if (isVolumeDragging || isScreenBrightnessDragging)
-                        _buildVolumeWidget(),
-                    ],
+                  },
+                  onDoubleTap: () {
+                    if (BetterPlayerMultipleGestureDetector.of(context) !=
+                        null) {
+                      BetterPlayerMultipleGestureDetector.of(context)!
+                          .onDoubleTap
+                          ?.call();
+                    }
+                    if (_betterPlayerController!.isPlaying()!) {
+                      _betterPlayerController?.pause();
+                      if (controlsNotVisible) cancelAndRestartTimer();
+                    } else {
+                      _betterPlayerController?.play();
+                    }
+                  },
+                  onLongPress: () {
+                    if (BetterPlayerMultipleGestureDetector.of(context) !=
+                        null) {
+                      BetterPlayerMultipleGestureDetector.of(context)!
+                          .onLongPress
+                          ?.call();
+                    }
+                  },
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Stack(
+                      children: [
+                        _wasLoading
+                            ? Center(child: _buildLoadingWidget())
+                            : AbsorbPointer(
+                                absorbing: controlsNotVisible,
+                                child: _buildHitArea(),
+                              ),
+                        if (_latestPlaySpeed != null) _buildPlayerSpeedWidget(),
+                        if (isVolumeDragging || isScreenBrightnessDragging)
+                          _buildVolumeWidget(),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            AbsorbPointer(
-              absorbing: controlsNotVisible,
-              child: _buildBottomBar(),
-            ),
-            _buildNextVideoWidget(),
-          ],
-        ),
-      ],
+              AbsorbPointer(
+                absorbing: controlsNotVisible,
+                child: _buildBottomBar(),
+              ),
+              _buildNextVideoWidget(),
+            ],
+          ),
+          if (isListPlayer && isFullScreen) _buildEpisodeListWidget(),
+        ],
+      ),
     );
   }
 
@@ -217,6 +243,80 @@ class _BetterPlayerMaterialControlsState
     }
 
     super.didChangeDependencies();
+  }
+
+  Widget _buildEpisodeListWidget() {
+    return Align(
+      alignment: Alignment.topRight,
+      child: SlideTransition(
+        position: _episodeListAnimation!,
+        child: Container(
+          padding: EdgeInsets.all(10),
+          height: MediaQuery.of(context).size.height,
+          width: MediaQuery.of(context).size.width / 3,
+          color: Colors.black.withOpacity(0.8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'Episodes (${betterPlayerDataSource?.length ?? 0})',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GridView.builder(
+                  itemCount: betterPlayerDataSource?.length ?? 0,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    childAspectRatio: 1.0,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
+                  itemBuilder: (_, i) {
+                    return GestureDetector(
+                      onTap: () {
+                        betterPlayerController?.betterPlayerPlaylistController
+                            ?.setupDataSource(i);
+                        _episodeListAnimationController!.reverse();
+                      },
+                      child: Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(4.0),
+                          border: Border.all(
+                            color: betterPlayerPlaylistController
+                                        ?.currentDataSourceIndex ==
+                                    i
+                                ? Theme.of(context).primaryColor
+                                : Colors.white24,
+                            width: 1.0,
+                          ),
+                        ),
+                        child: Text(
+                          '${i + 1}',
+                          style: TextStyle(
+                            color: betterPlayerPlaylistController
+                                        ?.currentDataSourceIndex ==
+                                    i
+                                ? Theme.of(context).primaryColor
+                                : Colors.white,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildErrorWidget() {
@@ -387,6 +487,7 @@ class _BetterPlayerMaterialControlsState
                       )
                     else
                       const SizedBox(),
+                    if (isListPlayer && isFullScreen) _buildEpisodeListButton(),
                     _buildMoreButton(),
                   ],
                 ),
@@ -526,6 +627,28 @@ class _BetterPlayerMaterialControlsState
             color: _controlsConfiguration.iconsColor,
             size: controllIconSize,
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEpisodeListButton() {
+    return BetterPlayerMaterialClickableWidget(
+      onTap: () {
+        if (_isShowEpisodeList) {
+          _episodeListAnimationController!.reverse();
+          _isShowEpisodeList = false;
+        } else {
+          changePlayerControlsNotVisible(true);
+          _episodeListAnimationController!.forward();
+          _isShowEpisodeList = true;
+        }
+      },
+      child: Container(
+        padding: EdgeInsets.only(right: controllIconPadding),
+        child: Icon(
+          Icons.format_list_bulleted_rounded,
+          color: _controlsConfiguration.iconsColor,
         ),
       ),
     );
@@ -782,6 +905,13 @@ class _BetterPlayerMaterialControlsState
     maxVolume = await Volume.getMaxVol;
     _latestVolume = (await Volume.getVol).toDouble();
     _lastScreenBrightness = await ScreenBrightness().system;
+
+    if (isListPlayer) {
+      _episodeListAnimationController = AnimationController(
+          duration: const Duration(milliseconds: 200), vsync: this);
+      _episodeListAnimation = Tween(begin: Offset(1, 0), end: Offset(0, 0))
+          .animate(_episodeListAnimationController!);
+    }
   }
 
   void _onExpandCollapse() {
