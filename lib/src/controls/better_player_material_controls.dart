@@ -227,6 +227,7 @@ class _BetterPlayerMaterialControlsState
     _initTimer?.cancel();
     _showAfterExpandCollapseTimer?.cancel();
     _controlsVisibilityStreamSubscription?.cancel();
+    _episodeListAnimationController?.dispose();
   }
 
   @override
