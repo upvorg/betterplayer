@@ -65,8 +65,8 @@ class _BetterPlayerMaterialControlsState
   bool isScreenBrightnessDragging = false;
 
   bool _isShowEpisodeList = false;
-  late AnimationController? _episodeListAnimationController;
-  late Animation<Offset>? _episodeListAnimation;
+  AnimationController? _episodeListAnimationController;
+  Animation<Offset>? _episodeListAnimation;
 
   BetterPlayerPlaylistController? get betterPlayerPlaylistController =>
       betterPlayerController?.betterPlayerPlaylistController;
@@ -147,8 +147,7 @@ class _BetterPlayerMaterialControlsState
                         _betterPlayerController!.isPlaying() == true &&
                         _betterPlayerController?.isLiveStream() == false) {
                       _latestPlaySpeed = _controller?.value.speed ?? 1.0;
-                      if (_.localPosition.dx >=
-                          (MediaQuery.of(context).size.width / 2)) {
+                      if (_.localPosition.dx >= (context.size!.width / 2)) {
                         _controller?.setSpeed(_latestPlaySpeed! * 2 > 2.0
                             ? 4.0
                             : _latestPlaySpeed! * 2);
@@ -246,77 +245,78 @@ class _BetterPlayerMaterialControlsState
   }
 
   Widget _buildEpisodeListWidget() {
-    return Align(
-      alignment: Alignment.topRight,
-      child: SlideTransition(
-        position: _episodeListAnimation!,
-        child: Container(
-          padding: EdgeInsets.all(10),
-          height: MediaQuery.of(context).size.height,
-          width: MediaQuery.of(context).size.width / 3,
-          color: Colors.black.withOpacity(0.8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  'Episodes (${betterPlayerDataSource?.length ?? 0})',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+    return LayoutBuilder(builder: (context, constraints) {
+      return Align(
+        alignment: Alignment.topRight,
+        child: SlideTransition(
+          position: _episodeListAnimation!,
+          child: Container(
+            padding: EdgeInsets.all(10),
+            width: constraints.maxWidth / 2.5,
+            color: Colors.black.withOpacity(0.85),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    'Episodes (${betterPlayerDataSource!.length})',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
-              Expanded(
-                child: GridView.builder(
-                  itemCount: betterPlayerDataSource?.length ?? 0,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    childAspectRatio: 1.0,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
+                Expanded(
+                  child: GridView.builder(
+                    itemCount: betterPlayerDataSource?.length ?? 0,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 4,
+                      childAspectRatio: 1.3,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                    ),
+                    itemBuilder: (_, i) {
+                      return GestureDetector(
+                        onTap: () {
+                          betterPlayerController?.betterPlayerPlaylistController
+                              ?.setupDataSource(i);
+                          _episodeListAnimationController!.reverse();
+                        },
+                        child: Container(
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(4.0),
+                            border: Border.all(
+                              color: betterPlayerPlaylistController
+                                          ?.currentDataSourceIndex ==
+                                      i
+                                  ? Theme.of(context).primaryColor
+                                  : Colors.white12,
+                              width: 1.0,
+                            ),
+                          ),
+                          child: Text(
+                            '${i + 1}',
+                            style: TextStyle(
+                              color: betterPlayerPlaylistController
+                                          ?.currentDataSourceIndex ==
+                                      i
+                                  ? Theme.of(context).primaryColor
+                                  : Colors.white,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                  itemBuilder: (_, i) {
-                    return GestureDetector(
-                      onTap: () {
-                        betterPlayerController?.betterPlayerPlaylistController
-                            ?.setupDataSource(i);
-                        _episodeListAnimationController!.reverse();
-                      },
-                      child: Container(
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4.0),
-                          border: Border.all(
-                            color: betterPlayerPlaylistController
-                                        ?.currentDataSourceIndex ==
-                                    i
-                                ? Theme.of(context).primaryColor
-                                : Colors.white24,
-                            width: 1.0,
-                          ),
-                        ),
-                        child: Text(
-                          '${i + 1}',
-                          style: TextStyle(
-                            color: betterPlayerPlaylistController
-                                        ?.currentDataSourceIndex ==
-                                    i
-                                ? Theme.of(context).primaryColor
-                                : Colors.white,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildErrorWidget() {
@@ -390,43 +390,45 @@ class _BetterPlayerMaterialControlsState
   }
 
   Widget _buildVolumeWidget() {
-    return Container(
-      color: Colors.transparent,
-      alignment: Alignment.topCenter,
-      child: Container(
-        margin: EdgeInsets.only(top: 10),
-        padding: EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.7),
-          borderRadius: BorderRadius.circular(48),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isVolumeDragging
-                  ? CupertinoIcons.volume_down
-                  : CupertinoIcons.brightness,
-              color: _controlsConfiguration.iconsColor,
-              size: 14,
-            ),
-            Container(
-              padding: EdgeInsets.only(left: 4),
-              width: MediaQuery.of(context).size.width / (isFullScreen ? 6 : 5),
-              child: LinearProgressIndicator(
-                value: isVolumeDragging
-                    ? ((_latestVolume ?? 0) / (maxVolume ?? 1)).toDouble()
-                    : _lastScreenBrightness,
-                valueColor: AlwaysStoppedAnimation(
-                  Theme.of(context).primaryColor,
-                ),
-                backgroundColor: Colors.grey,
+    return LayoutBuilder(builder: (context, constrain) {
+      return Container(
+        color: Colors.transparent,
+        alignment: Alignment.topCenter,
+        child: Container(
+          margin: EdgeInsets.only(top: 10),
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(48),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isVolumeDragging
+                    ? CupertinoIcons.volume_down
+                    : CupertinoIcons.brightness,
+                color: _controlsConfiguration.iconsColor,
+                size: 14,
               ),
-            ),
-          ],
+              Container(
+                padding: EdgeInsets.only(left: 4),
+                width: constrain.maxWidth / (isFullScreen ? 6 : 5),
+                child: LinearProgressIndicator(
+                  value: isVolumeDragging
+                      ? ((_latestVolume ?? 0) / (maxVolume ?? 1)).toDouble()
+                      : _lastScreenBrightness,
+                  valueColor: AlwaysStoppedAnimation(
+                    Theme.of(context).primaryColor,
+                  ),
+                  backgroundColor: Colors.grey,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildTopBar() {
@@ -635,14 +637,9 @@ class _BetterPlayerMaterialControlsState
   Widget _buildEpisodeListButton() {
     return BetterPlayerMaterialClickableWidget(
       onTap: () {
-        if (_isShowEpisodeList) {
-          _episodeListAnimationController!.reverse();
-          _isShowEpisodeList = false;
-        } else {
-          changePlayerControlsNotVisible(true);
-          _episodeListAnimationController!.forward();
-          _isShowEpisodeList = true;
-        }
+        _isShowEpisodeList = true;
+        changePlayerControlsNotVisible(true);
+        _episodeListAnimationController!.forward();
       },
       child: Container(
         padding: EdgeInsets.only(right: controllIconPadding),
@@ -882,6 +879,17 @@ class _BetterPlayerMaterialControlsState
 
     _updateState();
 
+    if (isListPlayer) {
+      _episodeListAnimationController = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 200),
+      );
+      _episodeListAnimation = Tween<Offset>(
+        begin: Offset(1, 0),
+        end: Offset(0, 0),
+      ).animate(_episodeListAnimationController!);
+    }
+
     if ((_controller!.value.isPlaying) ||
         _betterPlayerController!.betterPlayerConfiguration.autoPlay) {
       _startHideTimer();
@@ -905,13 +913,6 @@ class _BetterPlayerMaterialControlsState
     maxVolume = await Volume.getMaxVol;
     _latestVolume = (await Volume.getVol).toDouble();
     _lastScreenBrightness = await ScreenBrightness().system;
-
-    if (isListPlayer) {
-      _episodeListAnimationController = AnimationController(
-          duration: const Duration(milliseconds: 200), vsync: this);
-      _episodeListAnimation = Tween(begin: Offset(1, 0), end: Offset(0, 0))
-          .animate(_episodeListAnimationController!);
-    }
   }
 
   void _onExpandCollapse() {
@@ -1044,8 +1045,7 @@ class _BetterPlayerMaterialControlsState
       cancelAndRestartTimer();
       final double delta =
           details.localPosition.dx - horizontalDragStartPosition!;
-      final seekedSeconds =
-          (delta / MediaQuery.of(context).size.width) * 90; // 滑动多少秒
+      final seekedSeconds = (delta / context.size!.width) * 90; // 滑动多少秒
       final countSeconds = latestValue!.duration!.inSeconds; // 总秒数
       final end = _latestSeconds! + seekedSeconds; // 结束秒数
 
@@ -1069,7 +1069,7 @@ class _BetterPlayerMaterialControlsState
   }
 
   void _onVerticalDragStart(DragStartDetails details) {
-    if (details.localPosition.dx > (MediaQuery.of(context).size.width / 2)) {
+    if (details.localPosition.dx > (context.size!.width / 2)) {
       isVolumeDragging = true;
     } else {
       isScreenBrightnessDragging = true;
@@ -1082,7 +1082,7 @@ class _BetterPlayerMaterialControlsState
   Future<void> _onVerticalDragUpdate(DragUpdateDetails details) async {
     if (isVolumeDragging || isScreenBrightnessDragging) {
       final drag = -(details.localPosition.dy - verticalDragStartPosition!);
-      final h = MediaQuery.of(context).size.width /
+      final h = context.size!.width /
           (_betterPlayerController!.getAspectRatio() ?? 16 / 9); // 获取高度
       verticalDragStartPosition = details.localPosition.dy;
       final double percent = drag / h;
