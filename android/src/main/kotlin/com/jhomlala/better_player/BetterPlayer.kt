@@ -601,7 +601,7 @@ internal class BetterPlayer(
      * @param setupControlDispatcher - should add control dispatcher to created MediaSession
      * @return - configured MediaSession instance
      */
-    fun setupMediaSession(context: Context?, setupControlDispatcher: Boolean): MediaSessionCompat {
+    fun setupMediaSession(context: Context, setupControlDispatcher: Boolean): MediaSessionCompat {
         mediaSession?.release()
         val mediaButtonIntent = Intent(Intent.ACTION_MEDIA_BUTTON)
         val pendingIntent = PendingIntent.getBroadcast(
