@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -17,7 +16,6 @@ import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import android.view.Surface
 import androidx.lifecycle.Observer
-import androidx.media.session.MediaButtonReceiver
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkInfo
@@ -294,8 +292,7 @@ internal class BetterPlayer(
             context,
             NOTIFICATION_ID,
             playerNotificationChannelName!!,
-            mediaDescriptionAdapter
-        ).build()
+        ).setMediaDescriptionAdapter(mediaDescriptionAdapter).build()
         playerNotificationManager!!.setPlayer(exoPlayer)
         playerNotificationManager!!.setUseNextAction(false)
         playerNotificationManager!!.setUsePreviousAction(false)
@@ -606,7 +603,6 @@ internal class BetterPlayer(
      */
     fun setupMediaSession(context: Context?, setupControlDispatcher: Boolean): MediaSessionCompat {
         mediaSession?.release()
-        val mediaButtonReceiver = ComponentName(context!!, MediaButtonReceiver::class.java)
         val mediaButtonIntent = Intent(Intent.ACTION_MEDIA_BUTTON)
         val pendingIntent = PendingIntent.getBroadcast(
             context,
