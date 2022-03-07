@@ -304,7 +304,7 @@ internal class BetterPlayer(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             refreshHandler = Handler(Looper.getMainLooper())
             refreshRunnable = Runnable {
-                val playbackState: PlaybackStateCompat = if (exoPlayer?.isPlaying == true) {
+                val playbackState: PlaybackStateCompat = if (exoPlayer.isPlaying) {
                     PlaybackStateCompat.Builder()
                         .setActions(PlaybackStateCompat.ACTION_SEEK_TO)
                         .setState(PlaybackStateCompat.STATE_PLAYING, position, 1.0f)
@@ -498,8 +498,8 @@ internal class BetterPlayer(
         }
     }
 
-    private fun setAudioAttributes(exoPlayer: ExoPlayer?, mixWithOthers: Boolean) {
-        val audioComponent = exoPlayer!!.audioComponent ?: return
+    private fun setAudioAttributes(exoPlayer: ExoPlayer, mixWithOthers: Boolean) {
+        val audioComponent = exoPlayer.audioComponent ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             audioComponent.setAudioAttributes(
                 AudioAttributes.Builder().setContentType(C.CONTENT_TYPE_MOVIE).build(),
@@ -721,7 +721,7 @@ internal class BetterPlayer(
     }
 
     fun setMixWithOthers(mixWithOthers: Boolean) {
-        setAudioAttributes(exoPlayer, mixWithOthers)
+        setAudioAttributes(exoPlayer!!, mixWithOthers)
     }
 
     fun dispose() {
