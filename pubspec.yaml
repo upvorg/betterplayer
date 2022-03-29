@@ -3,6 +3,7 @@ description: Advanced video player based on video_player and Chewie. It's solves
 version: 0.0.82
 homepage: https://github.com/jhomlala/betterplayer
 documentation: https://jhomlala.github.io/betterplayer/
+publish_to: 'none'
 
 environment:
   sdk: '>=2.16.2 <3.0.0'
@@ -19,6 +20,10 @@ dependencies:
   path_provider: ^2.0.9
   collection: ^1.15.0
   xml: ^5.3.1
+  volume:
+    git:
+      url: https://github.com/upvorg/Volume_Flutter.git
+  screen_brightness: ^0.1.4
 
 dev_dependencies:
   flutter_test:
